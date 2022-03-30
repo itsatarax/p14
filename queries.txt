@@ -1,1 +1,54 @@
+List all the student details studying in fourth semester ‘C’ section.
+
+select s.*
+from student s, semsec ss, class c
+WHERE ss.ssid = c.ssid
+AND c.usn = s.usn
+AND ss.sem = 4
+AND ss.section = 'C';
+
+Compute the total number of male and female students in each semester and in each section.
+
+SELECT SS.sem, SS.section, S.gender, COUNT(*)
+FROM semsec SS, class C,student S
+WHERE SS.ssid = C.ssid AND S.usn = C.usn
+GROUP BY SS.sem ,SS.section , S.gender;
+
+Create a view of Test1 marks of student USN ‘1SJ17CS01’ in all subjects.
+
+create view stu_view as
+( select subcode, test1
+from iamarks
+where usn = '1SJ17CS01');
+
+select * from stu_view;
+
+Categorize students based on the following criterion:
+If FinalIA = 17 to 20 then CAT = ‘Outstanding’
+If FinalIA = 12 to 16 then CAT = ‘Average’
+If FinalIA< 12 then CAT = ‘Weak’
+Give these details only for 2th semester A, B, and C section students.
+
+SELECT i.usn, s.sem, s.section, i.subcode,
+CASE
+WHEN final >= 17 AND final <= 20 THEN 'Outstanding'
+WHEN final >= 12 AND final <= 16 THEN 'Average'
+ELSE 'Weak'
+END AS CAT
+FROM iamarks i, class c,semsec s
+where i.usn = c.usn
+and s.ssid = c.ssid
+and s.sem = 2
+and s.section in ('A', 'B', 'C'); 
+
+Calculate the FinalIA (average of best two test marks) and update the corresponding table for all students.
+
+CREATE VIEW finalia AS
+(SELECT usn, subcode,
+GREATEST(AVG(test1 + test2) / 2,AVG(test1 + test3) / 2,AVG(test2 + test3) / 2) AS finalia
+FROM iamarks
+GROUP BY usn , subcode);
+
+UPDATE iamarks i set final=(SELECT finalia from finalia f where i.usn=f.usn and
+i.subcode=f.subcode);
 
