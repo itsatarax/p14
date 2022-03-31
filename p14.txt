@@ -1,0 +1,150 @@
+CREATE TABLE STUDENT (
+USN VARCHAR(20) PRIMARY KEY,
+SNAME VARCHAR(20) NOT NULL,
+ADDRESS VARCHAR(20) NOT NULL,
+PHONE VARCHAR(10),
+GENDER CHAR(1));
+
+
+CREATE TABLE SEMSEC (
+SSID INT PRIMARY KEY,
+SEM INT,
+SECTION CHAR(1));
+
+
+CREATE TABLE CLASS (
+USN VARCHAR(20) NOT NULL,
+SSID INT NOT NULL,
+FOREIGN KEY (SSID) REFERENCES SEMSEC (SSID) ON DELETE CASCADE,
+FOREIGN KEY (USN) REFERENCES STUDENT (USN) ON DELETE CASCADE);
+
+
+CREATE TABLE SUB (
+SUBCODE VARCHAR(20) PRIMARY KEY,
+TITLE VARCHAR(30) NOT NULL,
+SEM INT NOT NULL,
+CREDITS INT NOT NULL);
+
+
+CREATE TABLE IAMARKS (
+USN VARCHAR(20),
+SUBCODE VARCHAR(20),
+SSID INT,
+TEST1 INT,
+TEST2 INT,
+TEST3 INT,
+FINAL INT,
+FOREIGN KEY (USN) REFERENCES STUDENT (USN) ON DELETE CASCADE,
+FOREIGN KEY (SUBCODE) REFERENCES SUB (SUBCODE) ON DELETE CASCADE,
+FOREIGN KEY (SSID) REFERENCES SEMSEC (SSID)ON DELETE CASCADE);
+
+insert into student values('1SJ17CS01','Ajith','Bangalore',1010101010,'M');
+insert into student values ('1SJ17CS02','Barat','Mysore',2020202020,'M');
+insert into student values ('1SJ17CS03','Clara','Delhi',303030303,'F');
+insert into student values ('1SJ17CS04','Denis','Pune',4040404040,'M');
+insert into student values ('1SJ17CS05','Elisa','Patna',505050505,'F');
+insert into student values ('1SJ17CS06','Franc','Mumbai',6060606060,'M');
+insert into student values ('1SJ17CS07','Gaury','Bangalore',077777777,'F');
+insert into student values ('1SJ17CS08','Harry','Kolkatta',88888870,'M');
+insert into student values ('1SJ17CS09','Isaac','Dehradun',9090909090,'M');
+insert into student values ('1SJ17CS010','Jay','Sikkim',111110000,'M');
+insert into student values('1SJ17CS41','Aman','Manipal',110110110,'M');
+
+insert into semsec values (1,2,'A');
+insert into semsec values (2,2,'B');
+insert into semsec values (3,2,'C');
+insert into semsec values (4,4,'A');
+insert into semsec values (5,4,'B');
+insert into semsec values (6,4,'C');
+insert into semsec values (7,6,'A');
+
+insert into class values ('1SJ17CS01','1');
+insert into class values ('1SJ17CS02','1');
+insert into class values ('1SJ17CS03','1');
+insert into class values ('1SJ17CS04','2');
+insert into class values ('1SJ17CS05','2');
+insert into class values ('1SJ17CS06','2');
+insert into class values('1SJ17CS07','3');
+insert into class values('1SJ17CS010','6');
+
+SELECT * FROM CLASS;
+insert into sub values('15PCD23','PCD',2,4);
+insert into sub values ('15CHE21','CHEM',2,4);
+insert into sub values ('15ELN22','Basic Electronics',2,4);
+insert into sub values ('15MAT24','Maths',2,4);
+insert into sub values ('15CS42','SE',4,4);
+insert into sub values ('15CS43','DAA',4,4);
+insert into sub values ('15CS44','MP',4,4);
+insert into sub values ('15CS46','DC',4,4);
+insert into sub values ('15CS61','Cryptography',6,4);
+
+insert into iamarks(usn,subcode,ssid,test1,test2,test3)values
+('1SJ17CS01','15CHE21',1,11,12,13);
+insert into iamarks(usn,subcode,ssid,test1,test2,test3)values
+('1SJ17CS01','15ELN22',1,13,14,15);
+insert into iamarks(usn,subcode,ssid,test1,test2,test3)values
+('1SJ17CS01','15MAT24',1,16,17,18);
+insert into iamarks(usn,subcode,ssid,test1,test2,test3)values
+('1SJ17CS41','15CS42',4,19,20,19);
+insert into iamarks(usn,subcode,ssid,test1,test2,test3)values
+('1SJ17CS41','15CS43',4,20,20,20);
+insert into iamarks(usn,subcode,ssid,test1,test2,test3)values
+('1SJ17CS41','15CS44',4,7,9,10);
+insert into iamarks(usn,subcode,ssid,test1,test2,test3)values
+('1SJ17CS41','15CS46',4,10,15,20);
+insert into iamarks(usn,subcode,ssid,test1,test2,test3)values
+('1SJ17CS010','15CS61',7,8,12,16);
+
+List all the student details studying in fourth semester ‘C’ section.
+
+select s.*
+from student s, semsec ss, class c
+WHERE ss.ssid = c.ssid
+AND c.usn = s.usn
+AND ss.sem = 4
+AND ss.section = 'C';
+
+Compute the total number of male and female students in each semester and in each section.
+
+SELECT SS.sem, SS.section, S.gender, COUNT(*)
+FROM semsec SS, class C,student S
+WHERE SS.ssid = C.ssid AND S.usn = C.usn
+GROUP BY SS.sem ,SS.section , S.gender;
+
+Create a view of Test1 marks of student USN ‘1SJ17CS01’ in all subjects.
+
+create view stu_view as
+( select subcode, test1
+from iamarks
+where usn = '1SJ17CS01');
+
+select * from stu_view;
+
+Categorize students based on the following criterion:
+If FinalIA = 17 to 20 then CAT = ‘Outstanding’
+If FinalIA = 12 to 16 then CAT = ‘Average’
+If FinalIA< 12 then CAT = ‘Weak’
+Give these details only for 2th semester A, B, and C section students.
+
+SELECT i.usn, s.sem, s.section, i.subcode,
+CASE
+WHEN final >= 17 AND final <= 20 THEN 'Outstanding'
+WHEN final >= 12 AND final <= 16 THEN 'Average'
+ELSE 'Weak'
+END AS CAT
+FROM iamarks i, class c,semsec s
+where i.usn = c.usn
+and s.ssid = c.ssid
+and s.sem = 2
+and s.section in ('A', 'B', 'C'); 
+
+Calculate the FinalIA (average of best two test marks) and update the corresponding table for all students.
+
+CREATE VIEW finalia AS
+(SELECT usn, subcode,
+GREATEST(AVG(test1 + test2) / 2,AVG(test1 + test3) / 2,AVG(test2 + test3) / 2) AS finalia
+FROM iamarks
+GROUP BY usn , subcode);
+
+UPDATE iamarks i set final=(SELECT finalia from finalia f where i.usn=f.usn and
+i.subcode=f.subcode);
